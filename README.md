@@ -93,3 +93,17 @@ python3 plan.py --scene Spiral
 The source code is released under [GPLv2](http://www.gnu.org/licenses/) license.
 
 For commercial use, please contact Bowen Yang [byangar@connect.ust.hk](mailto:byangar@connect.ust.hk).
+
+
+### 复现过程
+1. 注意不要用conda环境，容易出现bug。直接用默认的python3.8即可
+2. 先安装好对应thirdparty库，注意lib和python路径问题。
+3. 需要提前安装(pip install)`open3d`和`cupy`
+
+
+### Todolist
+1. 结合局部规划用于导航
+2. 在真实机器人上测试效果
+
+
+

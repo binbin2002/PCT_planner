@@ -5,17 +5,10 @@ import numpy as np
 
 from utils import *
 
-current_file=os.path.abspath(__file__)
-current_dir=os.path.dirname(current_file)
-planner_dir=os.path.dirname(current_dir)
-
-#
-sys.path.insert(0,planner_dir)
-
+sys.path.append('../')
 from lib import a_star, ele_planner, traj_opt
 
 rsg_root = os.path.dirname(os.path.abspath(__file__)) + '/../..'
-print(f"RSG root: {rsg_root}")
 
 
 class TomogramPlanner(object):
