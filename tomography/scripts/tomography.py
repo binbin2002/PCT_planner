@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+
+# functions for tomographic mapping from point clouds 实现了从3D点云数据中进行层析生成分层地图(tomographic mapping)的功能，用于机器人路径规划等应用。
 import os
 import sys
 import time
@@ -22,13 +24,15 @@ rsg_root = os.path.dirname(os.path.abspath(__file__)) + '/../..'
 
 class Tomography(object):
     def __init__(self, cfg, scene_cfg):
+        # 读取配置参数
         self.export_dir = rsg_root + cfg.map.export_dir
         self.pcd_file = scene_cfg.pcd.file_name
-        self.resolution = scene_cfg.map.resolution
+        self.resolution = scene_cfg.map.resolution 
         self.ground_h = scene_cfg.map.ground_h
         self.slice_dh = scene_cfg.map.slice_dh
 
         self.center = np.zeros(2, dtype=np.float32)
+        # 创建Tomogram对象，用于处理点云数据并生成分层地图
         self.tomogram = Tomogram(scene_cfg)
         points = self.loadPCD(self.pcd_file)
 
@@ -55,6 +59,11 @@ class Tomography(object):
         self.tomogram_pub = rospy.Publisher(tomogram_topic, PointCloud2, latch=True, queue_size=1)
 
     def loadPCD(self, pcd_file):
+        """
+            function: 加载点云数据并初始化映射环境
+            input: pcd_file - 点云文件名
+            output: points - 加载的点云数据（numpy数组）
+        """
         pcd = o3d.io.read_point_cloud(rsg_root + "/rsc/pcd/" + pcd_file)
         points = np.asarray(pcd.points).astype(np.float32)
         rospy.loginfo("PCD points: %d", points.shape[0])
@@ -68,7 +77,7 @@ class Tomography(object):
         self.map_dim_y = int(np.ceil((self.points_max[1] - self.points_min[1]) / self.resolution)) + 4
         n_slice_init = int(np.ceil((self.points_max[2] - self.points_min[2]) / self.slice_dh))
         self.center = (self.points_max[:2] + self.points_min[:2]) / 2
-        self.slice_h0 = self.points_min[-1] + self.slice_dh
+        self.slice_h0 = self.points_min[-1] + self.slice_dh # initial height of the first slice
         self.tomogram.initMappingEnv(self.center, self.map_dim_x, self.map_dim_y, n_slice_init, self.slice_h0)
 
         rospy.loginfo("Map center: [%.2f, %.2f]", self.center[0], self.center[1])
@@ -115,7 +124,7 @@ class Tomography(object):
 
         map_file = os.path.splitext(self.pcd_file)[0]
         self.exportTomogram(np.stack((layers_t, trav_grad_x, trav_grad_y, layers_g, layers_c)), map_file)
-
+        # 初始化ROS发布器并发布点云和分层地图
         self.initROS()
         self.publishPoints(points)
         self.publishLayers(self.layer_G_pub_list, layers_g, layers_t)
@@ -203,10 +212,10 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--scene', type=str, help='Name of the scene. Available: [\'Spiral\', \'Building\', \'Plaza\']')
-    args = parser.parse_args()
+    args = parser.parse_args() # Example: --scene Spiral
 
     cfg = Config()
-    scene_cfg = getattr(__import__('config'), 'Scene' + args.scene)
+    scene_cfg = getattr(__import__('config'), 'Scene' + args.scene) #动态从场景中加载模块配置 类似直接import tomography.config.scene_spiral as scene_cfg
 
     rospy.init_node('pointcloud_tomography', anonymous=True)
 

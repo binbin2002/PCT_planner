@@ -3,7 +3,7 @@ import cupy as cp
 
 from kernels import *
 
-
+# function: 点云----->分层栅格代价场的GPU加速，基于CuPy实现。 生成便于全局路径规划的分层地图表示(代价、几何、梯度)。
 class Tomogram(object):
     def __init__(self, cfg):
         self.resolution = cfg.map.resolution
@@ -20,6 +20,7 @@ class Tomogram(object):
         self.half_inf_k_size = int((self.safe_margin + self.inflation) / self.resolution)
 
     def initKernel(self):
+        # 创建并保存各类CUDA内核对象
         self.tomography_kernel = tomographyKernel(
             self.resolution, 
             self.map_dim_x, 
@@ -63,6 +64,8 @@ class Tomogram(object):
                 )
 
     def initBuffers(self):
+        # 调用CuPy分配GPU内存，初始化各类地图缓冲区
+        # 几何高度、颜色高度、梯度幅值平方、梯度幅值最大值、可行性代价、膨胀后代价
         self.layers_g = cp.zeros((self.n_slice_init, self.map_dim_x, self.map_dim_y), dtype=cp.float32)
         self.layers_c = cp.zeros((self.n_slice_init, self.map_dim_x, self.map_dim_y), dtype=cp.float32)
         self.grad_mag_sq = cp.zeros((self.n_slice_init, self.map_dim_x, self.map_dim_y), dtype=cp.float32)
@@ -92,13 +95,23 @@ class Tomogram(object):
         self.inflated_cost *= 0.
 
     def point2map(self, points):
+        """
+            function: 将点云数据映射到分层地图，并计算各层的可行性代价
+            input: points - 点云数据（numpy数组）
+            output: layers_t - 各层可行性代价地图（numpy数组）
+                    trav_gx - 各层可行性代价地图在x方向的梯度（numpy数组）
+                    trav_gy - 各层可行性代价地图在y方向的梯度（numpy数组）
+                    layers_g - 各层几何高度地图（numpy数组）
+                    layers_c - 各层颜色高度地图（numpy数组）
+                    t_gpu - 各阶段GPU计算时间（字典）        
+        """
         points = cp.asarray(points)
         points = points[~cp.isnan(points).any(axis=1)]
         self.clearMap()
 
         # Tomogram
         start_gpu = cp.cuda.Event()
-        end_gpu = cp.cuda.Event()
+        end_gpu = cp.cuda.Event() 
         start_gpu.record()
         
         self.tomography_kernel(

@@ -12,7 +12,7 @@ cd /home/yang/Planning/PCT_planner/planner/scripts
 # 使用GDB调试
 gdb -ex "set environment LD_LIBRARY_PATH=$LD_LIBRARY_PATH" \
     -ex "set environment PYTHONPATH=$PYTHONPATH" \
-    -ex "run plan.py --scene Spiral" \
+    -ex "run plan_ros.py --scene Spiral" \
     -ex "bt" \
     -ex "quit" \
     python3

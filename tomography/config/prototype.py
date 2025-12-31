@@ -9,15 +9,16 @@ POINT_FIELDS_XYZI = [
     PointField('intensity', 12, PointField.FLOAT32, 1)
 ]
 
-
+# function: 规则化生成二维栅格“索引表”和“点云原型”
 def GRID_POINTS_XYZI(resolution, dim_x, dim_y):
+    # 生成索引网格
     index_proto = np.zeros((dim_x * dim_y, 2), dtype=int)
     lx = np.linspace(0, dim_x - 1, dim_x, dtype=int)
     ly = np.linspace(0, dim_y - 1, dim_y, dtype=int)
     ix, iy = np.meshgrid(lx, ly)
     index_proto[:, 0] = ix.flatten()
     index_proto[:, 1] = iy.flatten()
-
+    # 生成点云原型
     point_proto = np.zeros((dim_x * dim_y, 4), dtype=np.float32)
     point_proto[:, :2] = index_proto[:, :2].astype(np.float32, copy=True)
     point_proto[:, 0] -= 0.5 * dim_x
